@@ -168,11 +168,3 @@ eas build --platform ios --profile preview         # requires an Apple Developer
 
 All captured on a real Android device. The visual design target these were built against is in `assets/design-reference/`.
 
-## Known limitations
-
-- **No persistence.** Difficulty, time limit, theme preference, and best-time/fewest-moves records are all session-only (plain React state) — they reset on app restart. `src/services/` is reserved for this but intentionally left empty; adding `AsyncStorage`-backed persistence was explicitly scoped out as its own future phase rather than folded into UI work.
-- **No haptics or sound**, despite the design reference showing toggles for both in Settings. Implementing them for real would require new dependencies (`expo-haptics`, an audio library); the Settings screen only exposes toggles for behavior that's actually wired up (Reduce Motion), per an explicit "no fake settings" decision made early in the project.
-- **No automated UI/component/E2E tests.** Test coverage is thorough for `src/game/` and the two hooks, but screens and presentational components have no rendering tests; verification of those was manual, on a real device.
-- **A few supplied decoration assets are unused** (`clouds.png`, `plants.png`, `sparkles.png` under `assets/game/decoration/`) — the mascot artwork for Win/Time Up already bakes in equivalent decorative elements, so adding these separately would have duplicated it.
-- **Visual fidelity to the design reference is close but not pixel-exact.** Several rounds of device-screenshot comparison closed the largest gaps (layout spacing, card-back/mascot sizing, a button-theming bug, dynamic win-title coloring), but minor differences likely remain (see the phase history in commit messages for specifics called out at each pass).
-- **iOS has not been tested on a physical device or simulator** — development happened on Windows against a physical Android device via Expo Go. The app uses no Android-specific APIs, so it should behave the same on iOS, but this hasn't been verified.
