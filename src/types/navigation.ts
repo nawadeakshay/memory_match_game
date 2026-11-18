@@ -10,6 +10,8 @@ export type RootStackParamList = {
     seconds: number;
     matchedPairs: number;
     totalPairs: number;
+    newBestTime: boolean;
+    newBestMoves: boolean;
   };
   TimeUp: {
     difficulty: Difficulty;

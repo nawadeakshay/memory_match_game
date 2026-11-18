@@ -6,15 +6,26 @@ import {
   useFonts,
 } from '@expo-google-fonts/poppins';
 import { NavigationContainer } from '@react-navigation/native';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { GameSettingsProvider } from './src/hooks/useGameSettings';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 
+// Keep the native splash screen up until fonts and saved theme settings are loaded,
+// so players never see a blank screen or a flash of the wrong theme.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 function AppContent() {
-  const { colorScheme } = useTheme();
+  const { colorScheme, ready } = useTheme();
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
+
+  if (!ready) return null;
 
   return (
     <NavigationContainer>
@@ -25,19 +36,15 @@ function AppContent() {
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,
     Poppins_700Bold,
   });
 
-  if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAF6EF' }}>
-        <ActivityIndicator color="#6F5AF7" />
-      </View>
-    );
+  if (!fontsLoaded && !fontError) {
+    return null;
   }
 
   return (

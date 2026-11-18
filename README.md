@@ -18,7 +18,7 @@ Memory Match is a 4×N tile-matching game: tap two cards, and if their symbols m
 - Optional **time limit** (Off / 60s / 90s / 120s / 180s) — run out of time before finding every pair and the game ends in a dedicated Time Up screen instead of a win
 - Real 3D card-flip animation (Reanimated), match "pop," and mismatch "shake," all with a working **Reduce Motion** setting that swaps transform-based animation for a near-instant, opacity-only transition
 - Move counter, live timer (counts down when a time limit is set, up otherwise), and pairs-found tracker
-- Session best-time / fewest-moves tracking per difficulty, shown on Home and flagged with a "NEW BEST" badge on the Win screen
+- Best-time and fewest-moves records per difficulty, saved on the device (along with settings and theme) and flagged with "NEW BEST" badges on the Win screen
 - Light / Dark / Auto (follows the OS) theming, built on a small design-token system (colors, typography, spacing, radii, shadows)
 - Fully responsive board and layout — card size is computed from the device's actual available width at runtime, not hard-coded per device
 

@@ -27,13 +27,15 @@ export function GameScreen({ navigation }: RootStackScreenProps<'Game'>) {
 
     if (game.status === 'won') {
       hasNavigatedAway.current = true;
-      recordResult(difficulty, { seconds: game.seconds, moves: game.moves });
+      const newBests = recordResult(difficulty, { seconds: game.seconds, moves: game.moves });
       navigation.replace('Win', {
         difficulty,
         moves: game.moves,
         seconds: game.seconds,
         matchedPairs: game.matchedPairs,
         totalPairs: game.totalPairs,
+        newBestTime: newBests.time,
+        newBestMoves: newBests.moves,
       });
     } else if (game.status === 'timeUp') {
       hasNavigatedAway.current = true;

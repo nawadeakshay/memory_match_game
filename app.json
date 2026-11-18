@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "gameapp",
+    "name": "Memory Match",
     "slug": "gameapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,9 +10,9 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.akshaynawade.memorymatch",
+      "package": "com.muskoverseas.memorymatch",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#6F5AF7",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -23,7 +23,20 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF6EF",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0F1220"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

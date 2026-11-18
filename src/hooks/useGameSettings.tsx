@@ -1,4 +1,5 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react';
+import { usePersistentState } from '../services/storage';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -21,9 +22,15 @@ export const DIFFICULTIES: DifficultyConfig[] = [
 /** Seconds allowed per game; 0 means no limit. */
 export const TIME_LIMIT_OPTIONS = [0, 60, 90, 120, 180] as const;
 
+/** Best time and fewest moves for a difficulty, tracked independently (they may come from different games). */
 export interface BestResult {
   seconds: number;
   moves: number;
+}
+
+export interface NewBests {
+  time: boolean;
+  moves: boolean;
 }
 
 interface GameSettingsContextValue {
@@ -34,7 +41,8 @@ interface GameSettingsContextValue {
   timeLimitSec: number;
   cycleTimeLimit: () => void;
   bestResults: Record<Difficulty, BestResult | null>;
-  recordResult: (difficulty: Difficulty, result: BestResult) => void;
+  /** Saves a finished game and reports which personal bests it beat. */
+  recordResult: (difficulty: Difficulty, result: BestResult) => NewBests;
   resetStatistics: () => void;
 }
 
@@ -45,14 +53,44 @@ function findDifficultyConfig(difficulty: Difficulty): DifficultyConfig {
   return DIFFICULTIES.find((config) => config.id === difficulty)!;
 }
 
+type BestResults = Record<Difficulty, BestResult | null>;
+
+const EMPTY_BEST_RESULTS: BestResults = { easy: null, medium: null, hard: null };
+
+export const STORAGE_KEYS = {
+  difficulty: 'memoryMatch.difficulty',
+  timeLimit: 'memoryMatch.timeLimitSec',
+  bestResults: 'memoryMatch.bestResults',
+} as const;
+
+function isDifficulty(value: unknown): value is Difficulty {
+  return DIFFICULTIES.some((config) => config.id === value);
+}
+
+function isTimeLimit(value: unknown): value is number {
+  return TIME_LIMIT_OPTIONS.includes(value as (typeof TIME_LIMIT_OPTIONS)[number]);
+}
+
+function isBestResult(value: unknown): value is BestResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const { seconds, moves } = value as Record<string, unknown>;
+  return typeof seconds === 'number' && seconds >= 0 && typeof moves === 'number' && moves >= 0;
+}
+
+function isBestResults(value: unknown): value is BestResults {
+  if (typeof value !== 'object' || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return DIFFICULTIES.every(({ id }) => record[id] === null || isBestResult(record[id]));
+}
+
 export function GameSettingsProvider({ children }: { children: ReactNode }) {
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [timeLimitSec, setTimeLimitSec] = useState<number>(0);
-  const [bestResults, setBestResults] = useState<Record<Difficulty, BestResult | null>>({
-    easy: null,
-    medium: null,
-    hard: null,
-  });
+  const [difficulty, setDifficulty] = usePersistentState<Difficulty>(STORAGE_KEYS.difficulty, 'medium', isDifficulty);
+  const [timeLimitSec, setTimeLimitSec] = usePersistentState<number>(STORAGE_KEYS.timeLimit, 0, isTimeLimit);
+  const [bestResults, setBestResults] = usePersistentState<BestResults>(
+    STORAGE_KEYS.bestResults,
+    EMPTY_BEST_RESULTS,
+    isBestResults
+  );
 
   const cycleDifficulty = useCallback(() => {
     setDifficulty((current) => {
@@ -69,17 +107,32 @@ export function GameSettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const recordResult = useCallback((forDifficulty: Difficulty, result: BestResult) => {
-    setBestResults((current) => {
-      const existing = current[forDifficulty];
-      const isBetter = !existing || result.seconds < existing.seconds;
-      return isBetter ? { ...current, [forDifficulty]: result } : current;
-    });
-  }, []);
+  const recordResult = useCallback(
+    (forDifficulty: Difficulty, result: BestResult): NewBests => {
+      const existing = bestResults[forDifficulty];
+      const newBests: NewBests = {
+        time: !existing || result.seconds < existing.seconds,
+        moves: !existing || result.moves < existing.moves,
+      };
+      if (newBests.time || newBests.moves) {
+        setBestResults((current) => {
+          const previous = current[forDifficulty];
+          return {
+            ...current,
+            [forDifficulty]: previous
+              ? { seconds: Math.min(previous.seconds, result.seconds), moves: Math.min(previous.moves, result.moves) }
+              : result,
+          };
+        });
+      }
+      return newBests;
+    },
+    [bestResults, setBestResults]
+  );
 
   const resetStatistics = useCallback(() => {
-    setBestResults({ easy: null, medium: null, hard: null });
-  }, []);
+    setBestResults(EMPTY_BEST_RESULTS);
+  }, [setBestResults]);
 
   const value = useMemo<GameSettingsContextValue>(
     () => ({
